@@ -47,7 +47,7 @@ app.get('/catalog/movie/:id/:extra?.json', async (req, res) => {
     // Rimosso il filtro rigido sul voto per evitare di perdere film d'autore recenti non ancora votatissimi
     queryParams = 'with_companies=41077|91523|591|40|856|1334|3236|4894|3410|81&sort_by=primary_release_date.desc';
   } else if (catalogId === 'bombo_europeo') {
-    queryParams = 'vote_average.gte=6.5&vote_count.gte=30&with_origin_country=FR|IT|DE|ES|GB|DK|SE|NO|NL&sort_by=popularity.desc';
+    queryParams = 'vote_average.gte=6.5&vote_count.gte=30&with_origin_country=FR|IT|DE|ES|GB|DK|SE|NO|NL&without_origin_country=US&sort_by=popularity.desc';
   } else if (catalogId === 'bombo_documentari') {
     queryParams = 'with_genres=99&vote_average.gte=6.5&vote_count.gte=20&sort_by=popularity.desc';
   } else {
