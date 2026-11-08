@@ -2,7 +2,7 @@ const express = require('express');
 const fetch = require('node-fetch');
 const app = express();
 
-const TMDB_KEY = 'LA_TUA_API_KEY_TMDB';
+const TMDB_KEY = process.env.TMDB_KEY;
 
 // Middleware CORS
 app.use((req, res, next) => {
