@@ -2,16 +2,15 @@ const express = require('express');
 const fetch = require('node-fetch');
 const app = express();
 
-const TMDB_KEY = '31b49a1e712c418bf23c6a72c77d4693';
+const TMDB_KEY = 'LA_TUA_API_KEY_TMDB';
 
-// Middleware per abilitare CORS (necessario per far leggere l'add-on a Stremio)
+// Middleware CORS
 app.use((req, res, next) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Headers', '*');
   next();
 });
 
-// 1. Manifest dell'Add-on con le 3 righe
 const manifest = {
   id: 'org.bombo.tmdb',
   version: '1.0.0',
@@ -20,29 +19,33 @@ const manifest = {
   resources: ['catalog'],
   types: ['movie'],
   catalogs: [
-    { type: 'movie', id: 'bombo_festival', name: '🏛️ Festival & Autore' },
+    { type: 'movie', id: 'bombo_autore', name: '🏛️ Cinema d\'Autore' },
     { type: 'movie', id: 'bombo_europeo', name: '🇪🇺 Cinema Europeo' },
-    { type: 'movie', id: 'bombo_documentari', name: '📽️ Documentari d\'Autore' }
+    { type: 'movie', id: 'bombo_documentari', name: '📽️ Documentari' }
   ]
 };
 
-// Rotta per il Manifest
 app.get('/manifest.json', (req, res) => {
   res.json(manifest);
 });
 
-// Rotta principale per l'apertura del sito
 app.get('/', (req, res) => {
-  res.send('Add-on BomboTMDB per Stremio attivo! Usa /manifest.json per installarlo.');
+  res.send('Add-on BomboTMDB per Stremio attivo!');
 });
 
-// 2. Gestione dei cataloghi e delle tue Query TMDB
-app.get('/catalog/movie/:id.json', async (req, res) => {
+// Rotta aggiornata con supporto a paginazione (:extra?)
+app.get('/catalog/movie/:id/:extra?.json', async (req, res) => {
   const catalogId = req.params.id;
+  const extra = req.params.extra ? Object.fromEntries(new URLSearchParams(req.params.extra)) : {};
+  
+  // Calcola la pagina di TMDB in base allo skip di Stremio (Stremio chiede skip=0, skip=20, skip=40...)
+  const skip = parseInt(extra.skip || 0);
+  const page = Math.floor(skip / 20) + 1;
+
   let queryParams = '';
 
-  if (catalogId === 'bombo_festival') {
-    queryParams = 'vote_average.gte=7.4&vote_count.gte=80&with_keywords=3385|10183|3384|10610|10609|10608|265814|222243&sort_by=primary_release_date.desc';
+  if (catalogId === 'bombo_autore') {
+    queryParams = 'with_companies=41077|91523|591|40|856|1334|3236|4894|3410|81&sort_by=primary_release_date.desc';
   } else if (catalogId === 'bombo_europeo') {
     queryParams = 'vote_average.gte=7.4&vote_count.gte=80&with_origin_country=FR|IT|DE|ES|GB|DK|SE|NO|PL|BE|NL|GR|PT|AT|CH|IE&sort_by=primary_release_date.desc';
   } else if (catalogId === 'bombo_documentari') {
@@ -52,7 +55,7 @@ app.get('/catalog/movie/:id.json', async (req, res) => {
   }
 
   try {
-    const tmdbUrl = `https://api.themoviedb.org/3/discover/movie?api_key=${TMDB_KEY}&language=it-IT&${queryParams}`;
+    const tmdbUrl = `https://api.themoviedb.org/3/discover/movie?api_key=${TMDB_KEY}&language=it-IT&page=${page}&${queryParams}`;
     const response = await fetch(tmdbUrl);
     const data = await response.json();
 
@@ -63,7 +66,10 @@ app.get('/catalog/movie/:id.json', async (req, res) => {
       type: 'movie',
       name: movie.title,
       poster: movie.poster_path ? `https://image.tmdb.org/t/p/w500${movie.poster_path}` : null,
-      description: movie.overview || 'Nessuna trama disponibile.'
+      background: movie.backdrop_path ? `https://image.tmdb.org/t/p/w1280${movie.backdrop_path}` : null,
+      description: movie.overview || 'Nessuna trama disponibile.',
+      releaseInfo: movie.release_date ? movie.release_date.substring(0, 4) : '',
+      imdbRating: movie.vote_average ? movie.vote_average.toFixed(1) : null
     }));
 
     res.json({ metas });
