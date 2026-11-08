@@ -1,0 +1,13 @@
+{
+  "id": "org.bombo.tmdb",
+  "version": "1.0.0",
+  "name": "BomboTMDB",
+  "description": "Cataloghi d'Autore personalizzati",
+  "resources": ["catalog"],
+  "types": ["movie"],
+  "catalogs": [
+    { "type": "movie", "id": "bombo_festival", "name": "🏛️ Festival & Autore" },
+    { "type": "movie", "id": "bombo_europeo", "name": "🇪🇺 Cinema Europeo" },
+    { "type": "movie", "id": "bombo_documentari", "name": "📽️ Documentari d'Autore" }
+  ]
+}
